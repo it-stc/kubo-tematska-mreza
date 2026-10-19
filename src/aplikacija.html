@@ -1,0 +1,521 @@
+<title>KUBO tematska mreža</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* Postavitev: levo nadzorna plošča (nastavitve + sličice), desno predogled mreže kot list papirja na mizi. */
+:root{
+  --bg:#F3F5EE; --panel:#FFFFFF; --fg:#22301F; --muted:#5E6B58; --line:#D7DECF;
+  --accent:#B9452A; --accent-fg:#FFFFFF; --straw:#E2B126; --sel:#FCEFD0; --desk:#E6EBDD;
+  --display:"Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --body:"Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#15171C; --panel:#1D2028; --fg:#ECEEF3; --muted:#9BA2B4; --line:#2E3340;
+  --accent:#FF7A5C; --accent-fg:#1B0E0A; --straw:#F5C451; --sel:#2B3040; --desk:#101216; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15171C; --panel:#1D2028; --fg:#ECEEF3; --muted:#9BA2B4; --line:#2E3340;
+  --accent:#FF7A5C; --accent-fg:#1B0E0A; --straw:#F5C451; --sel:#2B3040; --desk:#101216; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+h1{font-family:var(--display);font-weight:700;font-size:1.9rem;line-height:1.1;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:1.1rem;margin:0 0 .5rem}
+.wrap{max-width:1280px;margin:0 auto;display:grid;gap:20px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+header>div{min-width:0}
+header p{margin:.35rem 0 0;color:var(--muted);max-width:65ch}
+.ver{white-space:nowrap;font-size:.8rem;opacity:.8}
+.theme{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;display:grid;place-items:center;padding:0}
+.theme svg{width:22px;height:22px}
+.theme:focus-visible{outline:3px solid var(--straw);outline-offset:2px}
+.theme .moon{display:none}
+:root[data-theme="dark"] .theme .sun{display:none}
+:root[data-theme="dark"] .theme .moon{display:block}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .theme .sun{display:none}:root:not([data-theme="light"]) .theme .moon{display:block}}
+.app{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.app{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:18px}
+section{display:grid;gap:10px}
+.row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+label.f{display:grid;gap:4px;font-size:.8rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+input[type=number],select{font:inherit;font-size:1rem;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%;box-sizing:border-box;font-variant-numeric:tabular-nums}
+.chk{display:flex;gap:8px;align-items:center;font-size:.95rem}
+.chk input{width:18px;height:18px;accent-color:var(--accent)}
+.checks{display:grid;gap:6px}
+input[type=color]{width:100%;height:38px;padding:2px;border:1px solid var(--line);border-radius:8px;background:var(--bg);cursor:pointer;box-sizing:border-box}
+.counts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px}
+.cnt{display:grid;grid-template-columns:34px minmax(0,1fr) 56px;align-items:center;gap:6px;font-size:.85rem;font-weight:600}
+.cnt svg{width:34px;height:34px}
+.cnt input{padding:4px 6px}
+.counts[aria-disabled="true"]{opacity:.45}
+.stories{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.story{font:inherit;font-size:.78rem;font-weight:700;line-height:1.15;color:var(--fg);background:var(--bg);border:2px solid transparent;border-radius:10px;padding:6px 4px 8px;cursor:pointer;display:grid;justify-items:center;gap:4px;text-align:center}
+.story .th{display:flex;justify-content:center;gap:0}
+.story svg{width:30px;height:30px}
+.story[aria-checked="true"]{border-color:var(--accent);background:var(--sel)}
+.story:focus-visible{outline:3px solid var(--straw);outline-offset:2px}
+#storyIntro{min-height:2.6em}
+.theme-colors{display:flex;align-items:center;gap:8px;justify-content:flex-start}
+.theme-colors i{display:inline-flex;width:38px;height:20px;border-radius:999px;overflow:hidden;border:1px solid rgba(0,0,0,.15)}
+.theme-colors i b{flex:1}
+.swatches{display:flex;flex-wrap:wrap;gap:8px}
+.sw{font:inherit;font-size:.78rem;font-weight:700;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:4px 10px 4px 4px;display:flex;align-items:center;gap:6px;cursor:pointer}
+.sw i{display:inline-flex;width:30px;height:20px;border-radius:999px;overflow:hidden;border:1px solid rgba(0,0,0,.15)}
+.sw i b{flex:1}
+.sw:focus-visible{outline:3px solid var(--straw);outline-offset:2px}
+.palette{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.pal{font:inherit;font-size:.72rem;font-weight:700;color:var(--fg);background:var(--bg);border:2px solid transparent;border-radius:10px;padding:6px 4px;cursor:pointer;display:grid;justify-items:center;gap:2px;text-align:center;line-height:1.15}
+.pal svg{width:44px;height:44px}
+.pal[aria-pressed="true"]{border-color:var(--accent);background:var(--sel)}
+.pal:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--straw);outline-offset:2px}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{font:inherit;font-weight:700;font-size:.9rem;border-radius:8px;padding:8px 12px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-size:1rem;padding:11px 16px;width:100%}
+.btn:disabled{opacity:.55;cursor:progress}
+.hint{font-size:.85rem;color:var(--muted);margin:0}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.9rem;font-variant-numeric:tabular-nums;margin:0}
+.facts dt{color:var(--muted)} .facts dd{margin:0;font-weight:700}
+.status{font-size:.9rem;min-height:1.3em;margin:0}
+.status.err{color:var(--accent)}
+.stage{background:var(--desk);border-radius:12px;padding:16px;display:grid;gap:10px;min-width:0}
+.stage .top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.stage .top span{font-size:.85rem;color:var(--muted)}
+.stage{position:sticky;top:max(12px,env(safe-area-inset-top,0px))}
+.paper{overflow:hidden;background:#fff;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.18);display:flex;justify-content:center}
+#preview{display:block;width:100%;height:auto;max-height:calc(100vh - 120px);cursor:crosshair;touch-action:manipulation}
+@media (max-width:860px){.stage{position:static}#preview{max-height:70vh}}
+@media (prefers-reduced-motion:no-preference){.pal{transition:border-color .15s,background .15s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+    <h1>KUBO tematska mreža</h1>
+    <p>Izberi pravljico, nastavi mrežo in barve ter izvozi PDF za tisk na A3 z mrežo in sličicami za izrez, ki jih otroci sami postavljajo na polja. <span class="ver">Različica /*@@VERSION@@*/</span></p>
+    </div>
+    <button type="button" class="theme" id="themeBtn" aria-label="Preklopi svetlo ali temno izvedbo" title="Svetlo / temno">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z"/></svg>
+    </button>
+  </header>
+
+  <div class="app">
+    <form class="panel" id="form" autocomplete="off">
+      <section>
+        <h2>Pravljica</h2>
+        <div class="stories" id="stories" role="radiogroup" aria-label="Izberi pravljico"></div>
+        <p class="hint" id="storyIntro"></p>
+      </section>
+
+      <section>
+        <h2>Mreža</h2>
+        <div class="row">
+          <label class="f" for="cell">Polje (mm)<input type="number" id="cell" min="20" max="400" step="1" value="40"></label>
+          <label class="f" for="cols">Stolpci<input type="number" id="cols" min="1" max="40" step="1" value="6"></label>
+          <label class="f" for="rows">Vrstice<input type="number" id="rows" min="1" max="40" step="1" value="9"></label>
+        </div>
+        <div class="checks">
+          <label class="chk" for="labels"><input type="checkbox" id="labels"> Oznake polj (A1, B1 …)</label>
+          <label class="chk" for="checker"><input type="checkbox" id="checker" checked> Šahovnica (izmenično obarvana polja)</label>
+          <label class="chk" for="axis"><input type="checkbox" id="axis" checked> Črke in številke ob robu (na pregledni strani)</label>
+        </div>
+        <label class="f" for="lw">Debelina črt (mm)<input type="number" id="lw" min="0.2" max="3" step="0.1" value="0.4"></label>
+      </section>
+
+      <section>
+        <h2>Barve</h2>
+        <div class="row">
+          <label class="f" for="bg1">Polja<input type="color" id="bg1" value="#E4F2D7"></label>
+          <label class="f" for="bg2">Šahovnica<input type="color" id="bg2" value="#CFE6BC"></label>
+          <label class="f" for="gridc">Črte<input type="color" id="gridc" value="#4A5A3E"></label>
+        </div>
+        <button type="button" class="btn theme-colors" id="bTheme"><i aria-hidden="true" id="themeSw"></i><span id="themeName"></span></button>
+        <div class="swatches" id="swatches" role="group" aria-label="Pripravljene barvne kombinacije"></div>
+        <label class="chk" for="cardbg"><input type="checkbox" id="cardbg" checked> Bela podlaga pod sličicami</label>
+      </section>
+
+      <section>
+        <h2>Sličice za izrez</h2>
+        <label class="chk" for="cards"><input type="checkbox" id="cards" checked> Izvozi sličice za izrez</label>
+        <p class="hint">Vsaka sličica je velika kot eno polje. Določi, koliko kosov posamezne sličice potrebuješ (privzeto 4).</p>
+        <div class="counts" id="counts"></div>
+      </section>
+
+      <section>
+        <h2>Navodila: sličice na mreži</h2>
+        <p class="hint">Neobvezno. Klikni polje, da tja postaviš izbrano sličico; ponoven klik jo odstrani. Tako pripraviš nalogo, kam naj otroci postavijo sličice.</p>
+        <div class="palette" id="palette" role="group" aria-label="Izberi sličico"></div>
+        <label class="chk" for="gridPics"><input type="checkbox" id="gridPics" checked> Postavljene sličice natisni tudi na mrežo</label>
+        <div class="btns">
+          <button type="button" class="btn" id="bDefault">Privzeta postavitev</button>
+          <button type="button" class="btn" id="bRandom">Naključno</button>
+          <button type="button" class="btn" id="bClear">Počisti vse</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Izvoz PDF (A3)</h2>
+        <div class="row2">
+          <label class="f" for="mode">Način
+            <select id="mode">
+              <option value="tile">Prava velikost (več listov)</option>
+              <option value="fit">Pomanjšano na en list</option>
+            </select>
+          </label>
+          <label class="f" for="orient">Usmerjenost
+            <select id="orient">
+              <option value="portrait">Pokončno</option>
+              <option value="landscape">Ležeče</option>
+            </select>
+          </label>
+        </div>
+        <div class="row2">
+          <label class="f" for="overlap">Prekrivanje (mm)<input type="number" id="overlap" min="0" max="30" step="1" value="10"></label>
+          <label class="f" for="dpi">Kakovost
+            <select id="dpi">
+              <option value="150">Osnutek (150 dpi)</option>
+              <option value="200" selected>Standard (200 dpi)</option>
+              <option value="300">Visoka (300 dpi)</option>
+            </select>
+          </label>
+        </div>
+        <div class="checks">
+          <label class="chk" for="showTiles"><input type="checkbox" id="showTiles" checked> V predogledu pokaži razrez na liste</label>
+        </div>
+        <dl class="facts" id="facts"></dl>
+        <button type="submit" class="btn primary" id="bExport">Izvozi PDF</button>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </section>
+    </form>
+
+    <div class="stage">
+      <div class="top"><h2>Predogled</h2><span id="pvInfo"></span></div>
+      <div class="paper"><svg id="preview" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Predogled mreže"></svg></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- pravljice in sličice ---------- */
+const INK="#2E2A33";
+const STORIES=/*@@STORIES@@*/[];
+let STORY=STORIES[0],PICS=STORY.pics,DEFAULTS=STORY.defaults;
+let PIC=Object.fromEntries(PICS.map(p=>[p.id,p]));
+function picSVG(id,x,y,S){const p=PIC[id],m=S*.04;return `<svg x="${x+m}" y="${y+m}" width="${S-2*m}" height="${S-2*m}" viewBox="${p.vb}" preserveAspectRatio="xMidYMid meet" overflow="visible">${p.svg}</svg>`;}
+const ERASER={id:"erase",name:"Radirka",svg:`<rect x="22" y="38" width="56" height="28" rx="6" transform="rotate(-30 50 52)" fill="#F2B8C6" stroke="${INK}" stroke-width="2"/><path d="M30 78H76" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>`};
+const PRESETS=[["Travnik","#E4F2D7","#CFE6BC","#4A5A3E"],["Bela","#FFFFFF","#F1F1F1","#555555"],["Nebo","#E3F0FA","#CDE2F3","#3C5A78"],["Pesek","#F8EED8","#EEDDB8","#7A6236"],["Sivka","#EEE8F6","#DDD3EE","#5B4C7A"],["Meta","#DFF5EC","#C3EBDA","#2F6B55"],["Breskev","#FDE9DE","#F9D3BE","#8A4A2C"],["Limona","#FDF8D3","#F7EDA6","#7A6A12"],["Roza","#FCE6EE","#F7CCDC","#8A3A5A"],["Morje","#DDF1F4","#BCE2E8","#1F5E6B"],["Jesen","#F6E3CC","#E9C9A0","#6B3F1F"],["Snežna","#F4F7FA","#E4EAF0","#7A8794"],["Kontrast","#FFFFFF","#FFFFFF","#000000"],["Sonce in nebo","#FFF4D6","#DDF0FF","#5A5A5A"]];
+
+/* ---------- stanje ---------- */
+const $=id=>document.getElementById(id);
+const KEY="kubo-tematska-mreza-v1";
+let st={story:"trije-prasicki",byStory:{},cell:40,cols:6,rows:9,bg1:"#E4F2D7",bg2:"#CFE6BC",gridc:"#4A5A3E",cardbg:true,labels:false,labelsV:2,checker:true,axis:true,lw:0.4,mode:"tile",orient:"portrait",overlap:10,dpi:200,cards:true,gridPics:true,counts:{},showTiles:true,brush:"volk",place:{}};
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&typeof s==="object")st=Object.assign(st,s);}catch(e){}
+function defCounts(S){const c={};S.pics.forEach(p=>c[p.id]=4);return Object.assign(c,S.counts||{});}
+function loadStory(slug){
+  STORY=STORIES.find(x=>x.slug===slug)||STORIES[0];st.story=STORY.slug;
+  PICS=STORY.pics;DEFAULTS=STORY.defaults;PIC=Object.fromEntries(PICS.map(p=>[p.id,p]));
+  const b=st.byStory[STORY.slug]||{};
+  st.place=b.place||{};st.counts=Object.assign(defCounts(STORY),b.counts||{});
+  st.brush=(b.brush&&(PIC[b.brush]||b.brush==="erase"))?b.brush:PICS[0].id;
+  const c=b.colors||STORY.colors.slice(1);st.bg1=c[0];st.bg2=c[1];st.gridc=c[2];
+}
+function stashStory(){st.byStory[st.story]={place:st.place,counts:st.counts,brush:st.brush,colors:[st.bg1,st.bg2,st.gridc]};}
+loadStory(st.story);
+function save(){stashStory();try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
+
+const clamp=(v,a,b,d)=>{v=parseFloat(v);return isFinite(v)?Math.min(b,Math.max(a,v)):d;};
+function colName(i){let s="";i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26);}return s;}
+const fmt=n=>(Math.round(n*10)/10).toLocaleString("sl-SI");
+function placements(){
+  return Object.entries(st.place).map(([k,id])=>{const [c,r]=k.split(",").map(Number);return {c,r,id};})
+    .filter(p=>PIC[p.id]&&p.c>=0&&p.c<st.cols&&p.r>=1&&p.r<=st.rows)
+    .sort((a,b)=>PICS.indexOf(PIC[a.id])-PICS.indexOf(PIC[b.id])||a.c-b.c||a.r-b.r);
+}
+
+/* ---------- risanje mreže (enota: mm, izhodišče zgoraj levo, vrstica 1 spodaj) ---------- */
+const LAB_OPACITY=.55;
+function picCard(id,x,y,S){
+  const p=PIC[id];
+  return (st.cardbg?`<rect x="${x}" y="${y}" width="${S}" height="${S}" fill="#fff"/>`:"")+
+    picSVG(id,x,y,S);
+}
+function mapSVG(S,lwScale,forExport){
+  const W=st.cols*S,H=st.rows*S;
+  let s=`<rect x="0" y="0" width="${W}" height="${H}" fill="${st.bg1}"/>`;
+  if(st.checker){let d="";for(let c=0;c<st.cols;c++)for(let r=0;r<st.rows;r++)if((c+r)%2===0)d+=`M${c*S} ${r*S}h${S}v${S}h-${S}z`;s+=`<path d="${d}" fill="${st.bg2}"/>`;}
+  if(st.labels){
+    const fs=Math.max(2.4,S*.09);
+    s+=`<g font-family="Arial,Helvetica,sans-serif" font-size="${fs}" fill="${st.gridc}" fill-opacity="${LAB_OPACITY}">`;
+    for(let c=0;c<st.cols;c++)for(let r=1;r<=st.rows;r++)s+=`<text x="${c*S+S*.04}" y="${(st.rows-r+1)*S-S*.04}">${colName(c)}${r}</text>`;
+    s+=`</g>`;
+  }
+  if(!forExport||st.gridPics)placements().forEach(p=>{s+=picCard(p.id,p.c*S,(st.rows-p.r)*S,S);});
+  let d="";for(let c=0;c<=st.cols;c++)d+=`M${c*S} 0V${H}`;for(let r=0;r<=st.rows;r++)d+=`M0 ${r*S}H${W}`;
+  s+=`<path d="${d}" stroke="${st.gridc}" stroke-width="${st.lw*(lwScale||1)}" stroke-linecap="square" fill="none"/>`;
+  return s;
+}
+
+/* ---------- razrez na liste A3 ---------- */
+const MX=10,MT=10,MB=14;
+function pageDims(){return st.orient==="landscape"?{pw:420,ph:297}:{pw:297,ph:420};}
+function tiling(){
+  const {pw,ph}=pageDims(),W=st.cols*st.cell,H=st.rows*st.cell;
+  const ww=pw-2*MX,wh=ph-MT-MB,ov=Math.min(st.overlap,ww/2,wh/2);
+  const sx=ww-ov,sy=wh-ov;
+  const nc=W<=ww?1:Math.ceil((W-ov)/sx),nr=H<=wh?1:Math.ceil((H-ov)/sy);
+  return {pw,ph,ww,wh,ov,sx,sy,nc,nr,W,H};
+}
+function cardLayout(){
+  const {pw,ph}=pageDims(),gap=8,lab=7,aw=pw-2*MX,ah=ph-MT-MB-12;
+  const S=Math.min(st.cell,aw,ah-lab);
+  const cols=Math.max(1,Math.floor((aw+gap)/(S+gap))),rows=Math.max(1,Math.floor((ah+gap)/(S+lab+gap)));
+  return {S,gap,lab,cols,rows,per:cols*rows,scaled:S<st.cell};
+}
+
+/* ---------- strani PDF kot SVG ---------- */
+const FONT=`font-family="Arial,Helvetica,sans-serif"`;
+const esc=t=>String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+function wrapPage(inner){const {pw,ph}=pageDims();return {pw,ph,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${pw} ${ph}"><rect width="${pw}" height="${ph}" fill="#fff"/>${inner}</svg>`};}
+function overviewPage(T,fit){
+  const {pw,ph}=pageDims();
+  let s=`<text x="${MX+5}" y="${MT+12}" ${FONT} font-size="10" font-weight="700" fill="#22301F">${esc(STORY.title)} – KUBO mreža ${st.cols} × ${st.rows}</text>`;
+  const info=`Polje ${fmt(st.cell)} × ${fmt(st.cell)} mm · celotna mreža ${fmt(T.W/10)} × ${fmt(T.H/10)} cm · stolpci A–${colName(st.cols-1)}, vrstice 1–${st.rows} (1 spodaj)`;
+  s+=`<text x="${MX+5}" y="${MT+19}" ${FONT} font-size="4.2" fill="#555">${esc(info)}</text>`;
+  let lines=[];
+  if(fit)lines=["Ta list je pomanjšan in ni v pravi velikosti za KUBO."];
+  else lines=[`Natisni na A3 v dejanski velikosti (100 %, brez prilagajanja strani). Listov z mrežo: ${T.nc*T.nr} (${T.nr} vrstic × ${T.nc} stolpcev).`,
+    `Preveri z ravnilom: stranica enega polja mora meriti ${fmt(st.cell)} mm.`,
+    T.nc*T.nr>1?`Listi se prekrivajo ${fmt(T.ov)} mm. Odreži levi oz. zgornji rob ob črtkani črti in list prilepi čez sosednjega.`:"Mreža je na enem listu; odreži jo ob robu.",
+    ...(T.nc*T.nr>1?["Rdeči okvirji spodaj kažejo razporeditev listov; oznaka V2 S3 pomeni vrstica 2, stolpec 3."]:[])];
+  lines.forEach((t,i)=>{s+=`<text x="${MX+5}" y="${MT+27+i*5.5}" ${FONT} font-size="3.8" fill="#333">${esc(t)}</text>`;});
+  const top=MT+27+lines.length*5.5+6;
+  const pl=placements();const uniq=[...new Set(pl.map(p=>p.id))];
+  const legCols=Math.max(1,Math.floor((pw-2*MX-10)/66));const legRows=Math.ceil(uniq.length/legCols);
+  const legH=uniq.length?10+legRows*22:0;
+  const lab=st.axis?8:0;
+  const aw=pw-2*MX-10-lab,ah=ph-top-MB-legH-lab-4;
+  const k=Math.min(aw/T.W,ah/T.H);
+  const ox=(pw-T.W*k)/2+lab/2,oy=top+2;
+  s+=`<g transform="translate(${ox} ${oy}) scale(${k})">${mapSVG(st.cell,Math.max(1,0.35/(k*st.lw)),true)}</g>`;
+  if(st.axis){
+    const cs=st.cell*k,fs=Math.min(4,Math.max(1.8,cs*.45));
+    let a=`<g ${FONT} font-size="${fs}" font-weight="700" fill="#22301F" text-anchor="middle">`;
+    for(let c=0;c<st.cols;c++)a+=`<text x="${ox+c*cs+cs/2}" y="${oy+T.H*k+fs+1.5}">${colName(c)}</text>`;
+    for(let r=1;r<=st.rows;r++)a+=`<text x="${ox-fs*.9}" y="${oy+(st.rows-r)*cs+cs/2+fs*.35}">${r}</text>`;
+    s+=a+`</g>`;
+  }
+  if(!fit&&T.nc*T.nr>1){
+    s+=`<g fill="none" stroke="#C0392B" stroke-width=".5">`;let tx=`<g ${FONT} font-size="3" font-weight="700" fill="#C0392B">`;
+    for(let r=0;r<T.nr;r++)for(let c=0;c<T.nc;c++){const x0=c*T.sx,y0=r*T.sy,w=Math.min(T.ww,T.W-x0),h=Math.min(T.wh,T.H-y0);
+      s+=`<rect x="${ox+x0*k}" y="${oy+y0*k}" width="${w*k}" height="${h*k}"/>`;tx+=`<text x="${ox+x0*k+1.2}" y="${oy+y0*k+3.8}">V${r+1}S${c+1}</text>`;}
+    s+=`</g>`+tx+`</g>`;
+  }
+  if(uniq.length&&st.gridPics){
+    let ly=oy+T.H*k+lab+8;
+    s+=`<text x="${MX+5}" y="${ly}" ${FONT} font-size="4.5" font-weight="700" fill="#22301F">Sličice in njihova polja</text>`;
+    uniq.forEach((id,i)=>{const x=MX+5+(i%legCols)*66,y=ly+4+Math.floor(i/legCols)*22;
+      s+=picCard(id,x,y,18);
+      const where=pl.filter(p=>p.id===id).map(p=>colName(p.c)+p.r).join(", ");
+      s+=`<text x="${x+20}" y="${y+8}" ${FONT} font-size="3.6" font-weight="700" fill="#22301F">${esc(PIC[id].name)}</text><text x="${x+20}" y="${y+13}" ${FONT} font-size="3.3" fill="#555">${esc(where)}</text>`;});
+  }
+  s+=`<text x="${pw/2}" y="${ph-6}" ${FONT} font-size="3" fill="#888" text-anchor="middle">Pregled</text>`;
+  return wrapPage(s);
+}
+function tilePage(T,r,c){
+  const {pw,ph}=pageDims(),x0=c*T.sx,y0=r*T.sy;
+  let s=`<defs><clipPath id="w"><rect x="${MX}" y="${MT}" width="${T.ww}" height="${T.wh}"/></clipPath></defs>`;
+  const gx=T.nc===1?(pw-T.W)/2:MX-x0,gy=T.nr===1?Math.max(MT,Math.min((ph-T.H)/2,ph-MB-T.H)):MT-y0;
+  s+=`<g clip-path="url(#w)"><g transform="translate(${gx} ${gy})">${mapSVG(st.cell,1,true)}</g></g>`;
+  if(c>0)s+=`<line x1="${MX+T.ov}" y1="${MT}" x2="${MX+T.ov}" y2="${MT+T.wh}" stroke="#888" stroke-width=".35" stroke-dasharray="3 2"/>`;
+  if(r>0)s+=`<line x1="${MX}" y1="${MT+T.ov}" x2="${MX+T.ww}" y2="${MT+T.ov}" stroke="#888" stroke-width=".35" stroke-dasharray="3 2"/>`;
+  s+=`<text x="${MX}" y="${ph-5}" ${FONT} font-size="3.4" font-weight="700" fill="#555">V${r+1} S${c+1}</text>`;
+  s+=`<text x="${pw-MX}" y="${ph-5}" ${FONT} font-size="3" fill="#777" text-anchor="end">${esc(STORY.title)} · polje ${fmt(st.cell)} mm · list ${r*T.nc+c+1}/${T.nc*T.nr}</text>`;
+  return wrapPage(s);
+}
+function cardList(){const out=[];PICS.forEach(p=>{const n=Math.max(0,Math.min(50,Math.round(+st.counts[p.id]||0)));for(let i=0;i<n;i++)out.push({id:p.id});});return out;}
+function cardPages(){
+  const L=cardLayout(),pl=cardList(),pages=[];const {pw,ph}=pageDims();
+  for(let i=0;i<pl.length;i+=L.per){
+    const chunk=pl.slice(i,i+L.per),bw=L.cols*L.S+(L.cols-1)*L.gap,bx=(pw-bw)/2;
+    let s=`<text x="${MX+5}" y="${MT+6}" ${FONT} font-size="4.5" font-weight="700" fill="#22301F">Kartice za izrez${L.scaled?" (pomanjšane, polje je večje od lista)":` (${fmt(L.S)} × ${fmt(L.S)} mm)`}</text>`;
+    chunk.forEach((p,k)=>{const x=bx+(k%L.cols)*(L.S+L.gap),y=MT+12+Math.floor(k/L.cols)*(L.S+L.lab+L.gap),S=L.S;
+      if(st.cardbg)s+=`<rect x="${x}" y="${y}" width="${S}" height="${S}" fill="#fff"/>`;
+      s+=picSVG(p.id,x,y,S);
+      s+=`<text x="${x+S/2}" y="${y+S+4.5}" ${FONT} font-size="3.2" font-weight="700" fill="#22301F" text-anchor="middle">${esc(PIC[p.id].name.toUpperCase())}</text>`;
+      s+=`<rect x="${x}" y="${y}" width="${S}" height="${S}" fill="none" stroke="#999" stroke-width=".35" stroke-dasharray="3 2"/>`;});
+    s+=`<text x="${pw/2}" y="${ph-6}" ${FONT} font-size="3" fill="#888" text-anchor="middle">Izreži ob črtkani črti.</text>`;
+    pages.push(wrapPage(s));
+  }
+  return pages;
+}
+function buildPages(){
+  const T=tiling(),pages=[overviewPage(T,st.mode==="fit")];
+  if(st.mode==="tile")for(let r=0;r<T.nr;r++)for(let c=0;c<T.nc;c++)pages.push(tilePage(T,r,c));
+  if(st.cards)pages.push(...cardPages());
+  return pages;
+}
+
+/* ---------- predogled ---------- */
+const pv=$("preview");
+function render(){
+  const T=tiling(),S=st.cell,pad=S*.06;
+  let s=mapSVG(S);
+  if(st.mode==="tile"&&st.showTiles&&T.nc*T.nr>1){
+    s+=`<g fill="none" stroke="#C0392B" stroke-width="${S*.012}" stroke-dasharray="${S*.05} ${S*.03}">`;
+    for(let r=0;r<T.nr;r++)for(let c=0;c<T.nc;c++){const x0=c*T.sx,y0=r*T.sy;s+=`<rect x="${x0}" y="${y0}" width="${Math.min(T.ww,T.W-x0)}" height="${Math.min(T.wh,T.H-y0)}"/>`;}
+    s+=`</g>`;
+  }
+  pv.setAttribute("viewBox",`${-pad} ${-pad} ${T.W+2*pad} ${T.H+2*pad}`);
+  pv.innerHTML=s;
+  const nCards=st.cards?Math.ceil(cardList().length/cardLayout().per):0;
+  const nPages=1+(st.mode==="tile"?T.nc*T.nr:0)+nCards;
+  $("facts").innerHTML=`<dt>Velikost mreže</dt><dd>${fmt(T.W/10)} × ${fmt(T.H/10)} cm</dd>`+
+    (st.mode==="tile"?`<dt>Listi A3 z mrežo</dt><dd>${T.nc*T.nr} (${T.nr} × ${T.nc})</dd>`:`<dt>Merilo na listu</dt><dd>pomanjšano</dd>`)+
+    `<dt>Strani v PDF</dt><dd>${nPages}</dd><dt>Sličice za izrez</dt><dd>${st.cards?cardList().length:0}</dd><dt>Sličice na mreži</dt><dd>${placements().length}</dd>`;
+  $("pvInfo").textContent=`${st.cols} × ${st.rows} polj · polje ${fmt(S)} mm`;
+  save();
+}
+function cellFromEvent(e){
+  const pt=pv.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
+  const m=pv.getScreenCTM();if(!m)return null;const p=pt.matrixTransform(m.inverse());
+  const c=Math.floor(p.x/st.cell),rowFromTop=Math.floor(p.y/st.cell);
+  if(c<0||c>=st.cols||rowFromTop<0||rowFromTop>=st.rows)return null;
+  return {c,r:st.rows-rowFromTop};
+}
+pv.addEventListener("click",e=>{
+  const cell=cellFromEvent(e);if(!cell)return;const k=cell.c+","+cell.r;
+  if(st.brush==="erase"||st.place[k]===st.brush)delete st.place[k];else st.place[k]=st.brush;
+  render();
+});
+
+/* ---------- paleta ---------- */
+function buildPalette(){
+  const el=$("palette");el.innerHTML="";
+  [...PICS,ERASER].forEach(p=>{
+    const b=document.createElement("button");b.type="button";b.className="pal";b.id="pal-"+p.id;
+    b.setAttribute("aria-pressed",String(st.brush===p.id));
+    b.innerHTML=`<svg viewBox="${p.vb||"0 0 100 100"}" aria-hidden="true">${p.svg}</svg><span></span>`;
+    b.querySelector("span").textContent=p.name;
+    b.addEventListener("click",()=>{st.brush=p.id;el.querySelectorAll(".pal").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));save();});
+    el.appendChild(b);
+  });
+}
+
+/* ---------- nastavitve ---------- */
+const NUM={cell:[20,400,40],cols:[1,40,6],rows:[1,40,9],lw:[.2,3,.4],overlap:[0,30,10]};
+function syncInputs(){
+  Object.keys(NUM).forEach(k=>$(k).value=st[k]);
+  ["labels","checker","axis","cards","showTiles","cardbg","gridPics"].forEach(k=>$(k).checked=!!st[k]);
+  ["bg1","bg2","gridc"].forEach(k=>$(k).value=st[k]);
+  $("mode").value=st.mode;$("orient").value=st.orient;$("dpi").value=String(st.dpi);
+}
+Object.keys(NUM).forEach(k=>{
+  $(k).addEventListener("input",()=>{const v=parseFloat($(k).value);if(isFinite(v)&&v>=NUM[k][0]&&v<=NUM[k][1]){st[k]=(k==="cols"||k==="rows")?Math.round(v):v;render();}});
+  $(k).addEventListener("change",()=>{st[k]=clamp($(k).value,NUM[k][0],NUM[k][1],NUM[k][2]);if(k==="cols"||k==="rows")st[k]=Math.round(st[k]);$(k).value=st[k];render();});
+});
+["labels","checker","axis","cards","showTiles","cardbg","gridPics"].forEach(k=>$(k).addEventListener("change",()=>{st[k]=$(k).checked;render();}));
+["bg1","bg2","gridc"].forEach(k=>$(k).addEventListener("input",()=>{st[k]=$(k).value;render();}));
+(function(){const el=$("swatches");PRESETS.forEach(([n,a,b,c])=>{const s=document.createElement("button");s.type="button";s.className="sw";
+  s.innerHTML=`<i aria-hidden="true"><b style="background:${a}"></b><b style="background:${b}"></b><b style="background:${c}"></b></i><span></span>`;
+  s.querySelector("span").textContent=n;
+  s.addEventListener("click",()=>{st.bg1=a;st.bg2=b;st.gridc=c;["bg1","bg2","gridc"].forEach(k=>$(k).value=st[k]);render();});el.appendChild(s);});})();
+$("mode").addEventListener("change",()=>{st.mode=$("mode").value;render();});
+$("orient").addEventListener("change",()=>{st.orient=$("orient").value;render();});
+$("dpi").addEventListener("change",()=>{st.dpi=parseInt($("dpi").value,10)||200;save();});
+$("bDefault").addEventListener("click",()=>{st.place={};DEFAULTS.forEach(([id,c,r])=>{if(c<st.cols&&r<=st.rows)st.place[c+","+r]=id;});render();});
+$("bClear").addEventListener("click",()=>{st.place={};render();});
+$("bRandom").addEventListener("click",()=>{
+  st.place={};const cells=[];for(let c=0;c<st.cols;c++)for(let r=1;r<=st.rows;r++)cells.push(c+","+r);
+  for(let i=cells.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cells[i],cells[j]]=[cells[j],cells[i]];}
+  PICS.forEach((p,i)=>{if(cells[i])st.place[cells[i]]=p.id;});render();
+});
+
+/* ---------- izvoz ---------- */
+function rasterize(page,dpi){
+  return new Promise((res,rej)=>{
+    const pxW=Math.round(page.pw/25.4*dpi),pxH=Math.round(page.ph/25.4*dpi);
+    const svg=page.svg.replace("<svg ",`<svg width="${pxW}" height="${pxH}" `);
+    const url=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml;charset=utf-8"}));
+    const img=new Image();
+    img.onload=()=>{const cv=document.createElement("canvas");cv.width=pxW;cv.height=pxH;const ctx=cv.getContext("2d");
+      ctx.fillStyle="#fff";ctx.fillRect(0,0,pxW,pxH);ctx.drawImage(img,0,0,pxW,pxH);URL.revokeObjectURL(url);
+      res(cv.toDataURL("image/jpeg",.92));cv.width=cv.height=0;};
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("Strani ni bilo mogoče izrisati."));};
+    img.src=url;
+  });
+}
+const status=(t,err)=>{const el=$("status");el.textContent=t;el.className="status"+(err?" err":"");};
+let downloads=null;
+$("form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!window.jspdf){status("Knjižnica za PDF se ni naložila. Osveži stran in poskusi znova.",true);return;}
+  const btn=$("bExport");btn.disabled=true;
+  try{
+    const pages=buildPages(),{pw,ph}=pageDims();
+    const pdf=new window.jspdf.jsPDF({orientation:st.orient,unit:"mm",format:"a3",compress:true});
+    for(let i=0;i<pages.length;i++){
+      status(`Pripravljam stran ${i+1} od ${pages.length} …`);
+      const data=await rasterize(pages[i],st.dpi);
+      if(i>0)pdf.addPage("a3",st.orient);
+      pdf.addImage(data,"JPEG",0,0,pw,ph,undefined,"FAST");
+    }
+    pdf.setProperties({title:`${STORY.title} – KUBO mreža ${st.cols}×${st.rows}`});
+    const blob=pdf.output("blob");
+    const d=new Date(),z=n=>String(n).padStart(2,"0");
+    const stamp=`${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}_${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}`;
+    const name=`${stamp}_${STORY.slug}-kubo-${st.cols}x${st.rows}-polje${st.cell}mm-A3.pdf`;
+    const inClaude=!!(window.claude&&window.claude.use);
+    if(!inClaude){pdf.save(name);status(`Shranjeno: ${name} (${pages.length} strani).`);return;}
+    if(!downloads)downloads=await window.claude.use("downloads");
+    if(!downloads){status("Shranjevanje datotek v tem pogledu ni na voljo. Odpri stran v claude.ai in poskusi znova.",true);return;}
+    status("Potrdi shranjevanje v oknu, ki se je odprlo.");
+    try{await downloads.save({filename:name,data:blob});status(`Shranjeno: ${name} (${pages.length} strani).`);}
+    catch(err){const c=err&&err.code;
+      if(c==="declined")status("Shranjevanje preklicano.");
+      else if(c==="rate_limited")status("Okno za shranjevanje je že odprto. Počakaj trenutek in poskusi znova.",true);
+      else status("PDF-ja ni bilo mogoče shraniti v tem pogledu.",true);}
+  }catch(err){status(err.message||"Izvoz ni uspel.",true);}
+  finally{btn.disabled=false;}
+});
+
+function buildCounts(){
+  const el=$("counts");el.innerHTML="";
+  PICS.forEach(p=>{const row=document.createElement("label");row.className="cnt";row.htmlFor="cnt-"+p.id;
+    row.innerHTML=`<svg viewBox="${p.vb}" aria-hidden="true">${p.svg}</svg><span></span><input type="number" id="cnt-${p.id}" min="0" max="50" step="1">`;
+    row.querySelector("span").textContent=p.name;const inp=row.querySelector("input");inp.value=st.counts[p.id]??4;
+    inp.addEventListener("input",()=>{const v=parseInt(inp.value,10);if(isFinite(v)&&v>=0&&v<=50){st.counts[p.id]=v;render();}});
+    inp.addEventListener("change",()=>{st.counts[p.id]=Math.round(clamp(inp.value,0,50,4));inp.value=st.counts[p.id];render();});
+    el.appendChild(row);});
+}
+function syncCountsState(){$("counts").setAttribute("aria-disabled",String(!st.cards));}
+$("cards").addEventListener("change",syncCountsState);
+(function(){const root=document.documentElement,TK="kubo-tematska-tema";
+  root.setAttribute("data-theme","light");
+  try{const t=localStorage.getItem(TK);if(t==="light"||t==="dark")root.setAttribute("data-theme",t);}catch(e){}
+  $("themeBtn").addEventListener("click",()=>{
+    const cur=root.getAttribute("data-theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+    const next=cur==="dark"?"light":"dark";root.setAttribute("data-theme",next);
+    try{localStorage.setItem(TK,next);}catch(e){}});})();
+function buildStories(){
+  const el=$("stories");el.innerHTML="";
+  STORIES.forEach(S=>{const b=document.createElement("button");b.type="button";b.className="story";b.id="story-"+S.slug;
+    b.setAttribute("role","radio");b.setAttribute("aria-checked",String(S.slug===st.story));
+    b.innerHTML=`<span class="th" aria-hidden="true">${S.pics.slice(0,3).map(p=>`<svg viewBox="${p.vb}">${p.svg}</svg>`).join("")}</span><span></span>`;
+    b.querySelector("span:last-child").textContent=S.title;
+    b.addEventListener("click",()=>{if(S.slug===st.story)return;stashStory();loadStory(S.slug);
+      el.querySelectorAll(".story").forEach(x=>x.setAttribute("aria-checked",String(x===b)));
+      showStory();buildPalette();buildCounts();syncCountsState();render();});
+    el.appendChild(b);});
+}
+function showStory(){$("storyIntro").textContent=STORY.intro;
+  const c=STORY.colors;$("themeName").textContent="Barve pravljice: "+c[0];
+  $("themeSw").innerHTML=`<b style="background:${c[1]}"></b><b style="background:${c[2]}"></b><b style="background:${c[3]}"></b>`;
+  ["bg1","bg2","gridc"].forEach(k=>$(k).value=st[k]);}
+$("bTheme").addEventListener("click",()=>{const c=STORY.colors;st.bg1=c[1];st.bg2=c[2];st.gridc=c[3];["bg1","bg2","gridc"].forEach(k=>$(k).value=st[k]);render();});
+syncInputs();buildStories();showStory();buildPalette();buildCounts();syncCountsState();render();
+})();
+</script>
